@@ -26,6 +26,8 @@ RUN npm install --omit=dev
 # Copy backend source
 COPY backend/ .
 
+# Copy frontend source so the backend can serve it
+COPY frontend/ /frontend/
 # Create required directories
 RUN mkdir -p outputs templates
 
