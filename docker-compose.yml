@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=5000
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      # Mount your template PPTX files here
+      - ./backend/templates:/app/templates
+    restart: unless-stopped
