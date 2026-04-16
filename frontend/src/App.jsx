@@ -155,7 +155,17 @@ function App() {
           animate={{ opacity: 1, y: 0 }}
           className="auth-card"
         >
-          <div className="strivers-logo-placeholder" style={{ margin: '0 auto 1.5rem', width: 60, height: 60, fontSize: '1.8rem' }}>S</div>
+          <img 
+            src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
+            alt="Strivers"
+            style={{ height: '40px', margin: '0 auto 2rem', objectFit: 'contain' }}
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="strivers-logo-placeholder" style={{ margin: '0 auto 1.5rem', width: 60, height: 60, fontSize: '1.8rem', display: 'none' }}>S</div>
           <h1 style={{ fontSize: '1.5rem' }}>Protected Access</h1>
           <p className="subtitle" style={{ marginBottom: '2rem' }}>Enter the credential key provided by the Strivers internal team.</p>
           
@@ -195,14 +205,20 @@ function App() {
 
   // ── Render Main App ──
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <header className="app-header">
         <div className="brand-container">
-          <div className="strivers-logo-placeholder">S</div>
-          <div>
-            <span className="brand-name">Strivers</span>
-            <span className="brand-tag">Studio</span>
-          </div>
+          <img 
+            src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
+            alt="Strivers Logo" 
+            style={{ height: '32px', objectFit: 'contain' }}
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="strivers-logo-placeholder" style={{ display: 'none' }}>S</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           <ShieldCheck size={18} style={{ color: 'var(--success)' }} />
@@ -380,6 +396,19 @@ function App() {
           </motion.div>
         </main>
       </div>
+
+      {/* Footer Area */}
+      <footer className="app-footer">
+        <div style={{ fontWeight: '600', color: 'var(--text-dark)' }}>
+          © {new Date().getFullYear()} Strivers EdTech. All rights reserved.
+        </div>
+        <div style={{ marginTop: '0.25rem' }}>
+          Internal tool for content creation and management.
+        </div>
+        <div className="developer-credits">
+          Developed and maintained by <a href="https://github.com/503error-humannotfound" target="_blank" rel="noreferrer" style={{color: 'inherit', textDecoration: 'none'}}>@503error_humannotfound</a>
+        </div>
+      </footer>
     </div>
   );
 }
