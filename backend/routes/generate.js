@@ -131,10 +131,33 @@ function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, ima
   });
 }
 
-// ── SSE /api/generate-stream ──────────────────────────────────────────────
+const APP_SECRET = 'STRIVERS-QUIZ-2024';
+
+// ── Auth helper ───────────────────────────────────────────────────────────
+const checkAuth = (req) => {
+  return req.headers['x-auth-key'] === APP_SECRET;
+};
+
+// ── GET /api/auth/verify ──────────────────────────────────────────────────
+router.post('/auth/verify', (req, res) => {
+  const { key } = req.body;
+  if (key === APP_SECRET) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, error: 'Invalid access key' });
+  }
+});
+
+// ── SSE /api/generate ────────────────────────────────────────────────────
 router.post('/generate', upload.single('thumbnail'), async (req, res) => {
+  // Check auth first
+  if (!checkAuth(req)) {
+    return res.status(401).json({ error: 'Unauthorized. Please provide a valid access key.' });
+  }
+
   // Use unique ID for session
   const sessionId = uuidv4();
+// ... (rest of the code)
   let thumbnailPath = null;
   let questionsFilePath = null;
   let outputFilePath = null;
@@ -230,6 +253,10 @@ function cleanup(paths) {
 
 // ── GET /api/templates ────────────────────────────────────────────────────
 router.get('/templates', (req, res) => {
+  if (!checkAuth(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const templatesDir = path.join(__dirname, '..', 'templates');
   if (!fs.existsSync(templatesDir)) return res.json({ templates: [] });
 

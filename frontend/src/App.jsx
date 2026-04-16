@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileDown, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, FileDown, Play, AlertCircle, CheckCircle2, Lock, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
+  const [authKey, setAuthKey] = useState(localStorage.getItem('striver_auth_key') || '');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [authError, setAuthError] = useState(null);
+
   const [questions, setQuestions] = useState('');
   const [thumbnail, setThumbnail] = useState(null);
   const [template, setTemplate] = useState('1');
@@ -14,12 +19,49 @@ function App() {
   
   const logEndRef = useRef(null);
 
+  // ── Auth Verification ──
+  const verifyAuth = async (key) => {
+    if (!key) return;
+    setIsVerifying(true);
+    setAuthError(null);
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key })
+      });
+      if (res.ok) {
+        localStorage.setItem('striver_auth_key', key);
+        setIsAuthenticated(true);
+      } else {
+        setAuthError('Invalid Access Key');
+        localStorage.removeItem('striver_auth_key');
+      }
+    } catch (err) {
+      setAuthError('Connection failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/api/templates')
-      .then(res => res.json())
-      .then(data => setTemplates(data.templates || []))
-      .catch(err => console.error('Failed to fetch templates:', err));
+    if (authKey) {
+      verifyAuth(authKey);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetch('/api/templates', {
+        headers: { 'x-auth-key': authKey }
+      })
+        .then(res => res.json())
+        .then(data => setTemplates(data.templates || []))
+        .catch(err => {
+          if (err.message.includes('401')) setIsAuthenticated(false);
+        });
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,8 +94,14 @@ function App() {
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
+        headers: { 'x-auth-key': authKey },
         body: formData,
       });
+
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        throw new Error('Session expired or invalid key');
+      }
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.statusText}`);
@@ -98,6 +146,57 @@ function App() {
     }
   };
 
+  // ── Render Unlock Screen ──
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-card" 
+          style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}
+        >
+          <div style={{ background: 'rgba(89, 0, 255, 0.1)', width: 60, height: 60, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <Lock className="text-primary" />
+          </div>
+          <h1>Protected</h1>
+          <p className="subtitle" style={{ marginBottom: '1.5rem' }}>Enter the access key to unlock Strivers Quiz Studio.</p>
+          
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <input 
+              type="password" 
+              placeholder="Enter access key..." 
+              value={authKey}
+              onChange={(e) => setAuthKey(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)}
+              style={{ textAlign: 'center', letterSpacing: '4px' }}
+            />
+          </div>
+
+          <button 
+            className="generate-btn" 
+            onClick={() => verifyAuth(authKey)}
+            disabled={isVerifying || !authKey}
+          >
+            {isVerifying ? 'Verifying...' : 'Unlock Now'}
+          </button>
+
+          {authError && (
+            <motion.p 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              style={{ color: 'var(--error)', marginTop: '1rem', fontSize: '0.875rem' }}
+            >
+              <AlertCircle size={14} style={{ display: 'inline', marginRight: 4, transform: 'translateY(2px)' }} />
+              {authError}
+            </motion.p>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Render Main App ──
   return (
     <div className="app-container">
       <motion.div 
@@ -105,8 +204,15 @@ function App() {
         animate={{ opacity: 1, x: 0 }}
         className="glass-card"
       >
-        <h1>Quiz Studio</h1>
-        <p className="subtitle">Transform your raw questions into premium Strivers-style PPTX in seconds.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1>Quiz Studio</h1>
+            <p className="subtitle">Transform your raw questions into premium Strivers-style PPTX.</p>
+          </div>
+          <div title="Authenticated" style={{ color: 'var(--success)', opacity: 0.8 }}>
+            <ShieldCheck size={24} />
+          </div>
+        </div>
 
         <form onSubmit={handleGenerate}>
           <div className="form-group">
