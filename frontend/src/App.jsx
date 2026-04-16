@@ -146,270 +146,250 @@ function App() {
     }
   };
 
-  // ── Render Unlock Screen ──
+// ── Render Unlock Screen ──
   if (!isAuthenticated) {
     return (
-      <div className="auth-overlay">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="auth-card"
-        >
-          <img 
-            src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
-            alt="Strivers"
-            style={{ height: '40px', margin: '0 auto 2rem', objectFit: 'contain' }}
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="strivers-logo-placeholder" style={{ margin: '0 auto 1.5rem', width: 60, height: 60, fontSize: '1.8rem', display: 'none' }}>S</div>
-          <h1 style={{ fontSize: '1.5rem' }}>Protected Access</h1>
-          <p className="subtitle" style={{ marginBottom: '2rem' }}>Enter the credential key provided by the Strivers internal team.</p>
-          
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={authKey}
-              onChange={(e) => setAuthKey(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)}
-              style={{ textAlign: 'center', fontSize: '1.2rem' }}
-            />
-          </div>
-
-          <button 
-            className="generate-btn" 
-            onClick={() => verifyAuth(authKey)}
-            disabled={isVerifying || !authKey}
+      <>
+        <div className="dynamic-bg">
+          <div className="blob blob-1"></div>
+          <div className="blob blob-2"></div>
+          <div className="blob blob-3"></div>
+        </div>
+        <div className="auth-overlay">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-panel auth-card"
           >
-            {isVerifying ? 'Verifying...' : 'Unlock Workspace'}
-          </button>
+            <img 
+              src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
+              alt="Strivers"
+              style={{ width: '100%', maxWidth: '280px', margin: '0 auto 2.5rem', objectFit: 'contain', filter: 'drop-shadow(0 0 15px rgba(255,255,255,0.2)) invert(1) brightness(2)' }}
+              onError={(e) => {
+                e.target.onerror = null; 
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'block';
+              }}
+            />
+            <h1 style={{ display: 'none', margin: '0 auto 2rem', fontSize: '2.5rem' }}>STRIVERS</h1>
+            <p className="subtitle" style={{ marginBottom: '2.5rem', fontSize: '1.1rem' }}>Enter the master key to access your internal AI workspace.</p>
+            
+            <div className="form-group" style={{ marginBottom: '2rem' }}>
+              <input 
+                type="password" 
+                placeholder="Secure Access Key" 
+                value={authKey}
+                onChange={(e) => setAuthKey(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)}
+                style={{ textAlign: 'center', fontSize: '1.2rem', letterSpacing: '2px', padding: '1.25rem' }}
+              />
+            </div>
 
-          {authError && (
-            <motion.p 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }}
-              style={{ color: 'var(--error)', marginTop: '1.25rem', fontSize: '0.875rem', fontWeight: '600' }}
+            <button 
+              className="generate-btn" 
+              onClick={() => verifyAuth(authKey)}
+              disabled={isVerifying || !authKey}
+              style={{ padding: '1.25rem' }}
             >
-              <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />
-              {authError}
-            </motion.p>
-          )}
-        </motion.div>
-      </div>
+              <ShieldCheck size={20} />
+              {isVerifying ? 'Authenticating...' : 'Unlock Workspace'}
+            </button>
+
+            {authError && (
+              <motion.p 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }}
+                style={{ color: 'var(--error)', marginTop: '1.5rem', fontSize: '1rem', fontWeight: '500' }}
+              >
+                <AlertCircle size={16} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />
+                {authError}
+              </motion.p>
+            )}
+          </motion.div>
+        </div>
+      </>
     );
   }
 
   // ── Render Main App ──
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <header className="app-header">
-        <div className="brand-container">
-          <img 
-            src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
-            alt="Strivers Logo" 
-            style={{ height: '32px', objectFit: 'contain' }}
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="strivers-logo-placeholder" style={{ display: 'none' }}>S</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          <ShieldCheck size={18} style={{ color: 'var(--success)' }} />
-          <span>Internal Access Active</span>
-        </div>
-      </header>
-
-      <div className="main-layout">
-        <aside className="sidebar-left">
-          <div className="sidebar-section">
-            <h3 className="sidebar-title">How it works</h3>
-            <div className="tip-card">
-              <span className="tip-label">PRO TIP</span>
-              <p>Paste raw text directly from your PDFs or word docs. The AI will automatically clean up the formatting.</p>
-            </div>
-            <div className="tip-card">
-              <span className="tip-label">BILINGUAL</span>
-              <p>The engine handles both English and Bengali translations simultaneously to keep your slides consistent.</p>
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <h3 className="sidebar-title">Formatting Rules</h3>
-            <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <li style={{ marginBottom: '0.5rem' }}>Options should start with A, B, C, D or 1, 2, 3, 4.</li>
-              <li style={{ marginBottom: '0.5rem' }}>Template images are automatically centered.</li>
-              <li style={{ marginBottom: '0.5rem' }}>Max 10 questions per batch recommended.</li>
-            </ul>
-          </div>
-        </aside>
-
-        <main className="content-area">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="pro-card"
-          >
-            <div>
-              <h1>Generator</h1>
-              <p className="subtitle">AI-powered Quiz PPTX creation tool.</p>
-            </div>
-
-            <form onSubmit={handleGenerate}>
-              <div className="form-group">
-                <label>1. Select Style Template</label>
-                <div className="template-grid">
-                  {templates.map((t) => (
-                    <div 
-                      key={t.number}
-                      className={`template-item ${template === t.number ? 'active' : ''}`}
-                      onClick={() => setTemplate(t.number)}
-                    >
-                      <div style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: '800' }}>STYLE</div>
-                      <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>Template {t.number}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>2. Quiz Questions (Raw Text)</label>
-                <textarea 
-                  rows="8"
-                  placeholder="Paste your raw content...&#10;1. First Question?&#10;A) Option 1..."
-                  value={questions}
-                  onChange={(e) => setQuestions(e.target.value)}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="form-group">
-                <label>3. Title Slide Image (Optional)</label>
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="file" 
-                    className="custom-file-input"
-                    id="thumb-upload"
-                    accept="image/*"
-                    onChange={(e) => setThumbnail(e.target.files[0])}
-                    style={{ display: 'none' }}
-                  />
-                  <label 
-                    htmlFor="thumb-upload" 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.75rem', 
-                      padding: '0.875rem', 
-                      border: '1.5px dashed var(--border-rich)', 
-                      borderRadius: '10px', 
-                      cursor: 'pointer',
-                      justifyContent: 'center',
-                      color: 'var(--text-muted)',
-                      background: '#fff',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    <Upload size={18} />
-                    {thumbnail ? <span style={{ color: 'var(--text-dark)' }}>{thumbnail.name}</span> : 'Select custom cover image'}
-                  </label>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                className="generate-btn" 
-                disabled={isGenerating || !questions}
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="loader"></div>
-                    Engine Running...
-                  </>
-                ) : (
-                  <>
-                    <Play size={18} fill="currentColor" />
-                    Process & Generate
-                  </>
-                )}
-              </button>
-            </form>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="pro-card"
-            style={{ display: 'flex', flexDirection: 'column' }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Engine Runtime</h2>
-              {isGenerating && <div className="loader" style={{ width: 16, height: 16, borderTopColor: 'var(--primary)', borderLeftColor: 'var(--border-rich)', borderRightColor: 'var(--border-rich)', borderBottomColor: 'var(--border-rich)' }}></div>}
-            </div>
-
-            <div className="log-container">
-              {logs.length === 0 && (
-                <div style={{ color: '#64748b', textAlign: 'center', marginTop: '25%', fontSize: '0.9rem' }}>
-                  Ready to process batch.
-                </div>
-              )}
-              {logs.map(log => (
-                <div key={log.id} className="log-entry">
-                  <span className="log-time">{log.time}</span>
-                  <span className={`log-msg log-step-${log.step}`}>
-                    {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
-                    {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
-                    {log.message}
-                  </span>
-                </div>
-              ))}
-              <div ref={logEndRef} />
-            </div>
-
-            <AnimatePresence>
-              {downloadUrl && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  style={{ textAlign: 'center' }}
-                >
-                  <a href={downloadUrl} className="download-link" download>
-                    <FileDown size={20} />
-                    Download Final PPTX
-                  </a>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {error && !isGenerating && (
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fef2f2', borderRadius: '10px', border: '1px solid #fee2e2', color: 'var(--error)', fontSize: '0.85rem', fontWeight: '600' }}>
-                <AlertCircle size={16} style={{ display: 'inline', marginRight: 8, transform: 'translateY(3px)' }} />
-                RUNTIME ERROR: {error}
-              </div>
-            )}
-          </motion.div>
-        </main>
+    <>
+      <div className="dynamic-bg">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
       </div>
 
-      {/* Footer Area */}
-      <footer className="app-footer">
-        <div style={{ fontWeight: '600', color: 'var(--text-dark)' }}>
-          © {new Date().getFullYear()} Strivers EdTech. All rights reserved.
-        </div>
-        <div style={{ marginTop: '0.25rem' }}>
-          Internal tool for content creation and management.
-        </div>
-        <div className="developer-credits">
-          Developed and maintained by <a href="https://github.com/503error-humannotfound" target="_blank" rel="noreferrer" style={{color: 'inherit', textDecoration: 'none'}}>@503error_humannotfound</a>
-        </div>
-      </footer>
-    </div>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <header className="app-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <img 
+              src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" 
+              alt="Strivers Logo" 
+              style={{ height: '36px', objectFit: 'contain', filter: 'invert(1) brightness(1.5)', margin: '0px 10px'}}
+              onError={(e) => {
+                e.target.onerror = null; 
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'block';
+              }}
+            />
+            <span style={{ display: 'none', fontWeight: '800', fontSize: '1.5rem' }}>STRIVERS</span>
+            <div style={{ padding: '0.4rem 1rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '2rem', color: '#60a5fa', fontSize: '0.8rem', fontWeight: '700', letterSpacing: '0.1em' }}>
+              INTERNAL TOOL
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--success)', fontSize: '0.9rem', fontWeight: '500' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 10px var(--success)' }}></div>
+            System Online
+          </div>
+        </header>
+
+        <main className="main-wrapper">
+          <div className="content-grid">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="glass-panel"
+            >
+              <div>
+                <h1>Generator AI</h1>
+                <p className="subtitle">Compile automated PowerPoint materials perfectly styled for Strivers content.</p>
+              </div>
+
+              <form onSubmit={handleGenerate}>
+                <div className="form-group">
+                  <label>1. Select Style Template</label>
+                  <div className="template-grid">
+                    {templates.map((t) => (
+                      <div 
+                        key={t.number}
+                        className={`template-item ${template === t.number ? 'active' : ''}`}
+                        onClick={() => setTemplate(t.number)}
+                      >
+                        <div style={{ fontSize: '0.7rem', opacity: 0.6, letterSpacing: '1px' }}>TEMPLATE</div>
+                        <div style={{ fontWeight: '700', fontSize: '1.1rem', marginTop: '0.2rem' }}>{t.number}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>2. Paste Raw Content</label>
+                  <textarea 
+                    rows="8"
+                    placeholder="Drop your raw test questions in here...&#10;1. What is the powerhouse of the cell?&#10;A) Nucleus&#10;B) Mitochondria..."
+                    value={questions}
+                    onChange={(e) => setQuestions(e.target.value)}
+                    required
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>3. Custom Wrapper (Optional)</label>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="file" 
+                      id="thumb-upload"
+                      accept="image/*"
+                      onChange={(e) => setThumbnail(e.target.files[0])}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="thumb-upload" className="file-upload-label">
+                      <Upload size={20} />
+                      {thumbnail ? <span style={{ color: '#fff', fontWeight: '500' }}>{thumbnail.name}</span> : 'Attach alternative cover image'}
+                    </label>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="generate-btn" 
+                  disabled={isGenerating || !questions}
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="loader"></div>
+                      Processing Content...
+                    </>
+                  ) : (
+                    <>
+                      <Play size={20} fill="currentColor" />
+                      Run Generator Pipeline
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="glass-panel"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: 'var(--primary)' }}>//</span> Active Console
+                </h2>
+              </div>
+
+              <div className="log-container">
+                {logs.length === 0 && (
+                  <div style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: '25%', fontSize: '0.9rem' }}>
+                    Awaiting commands...
+                  </div>
+                )}
+                {logs.map(log => (
+                  <div key={log.id} className="log-entry">
+                    <span className="log-time">{log.time}</span>
+                    <span className={`log-msg log-step-${log.step}`}>
+                      {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
+                      {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+                <div ref={logEndRef} />
+              </div>
+
+              <AnimatePresence>
+                {downloadUrl && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    style={{ textAlign: 'center' }}
+                  >
+                    <a href={downloadUrl} className="download-link" download>
+                      <FileDown size={20} />
+                      Download Final Output
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {error && !isGenerating && (
+                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.15)', borderRadius: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#fca5a5', fontSize: '0.9rem' }}>
+                  <AlertCircle size={16} style={{ display: 'inline', marginRight: 8, transform: 'translateY(3px)' }} />
+                  {error}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </main>
+
+        <footer className="app-footer">
+          <div style={{ fontWeight: '500', color: 'var(--text-muted)' }}>
+            © {new Date().getFullYear()} Strivers EdTech.
+          </div>
+          <div className="developer-credits">
+            Developed and maintained by <a href="https://github.com/503error-humannotfound" target="_blank" rel="noreferrer" style={{color: 'rgba(255,255,255,0.6)', textDecoration: 'none', borderBottom: '1px dotted rgba(255,255,255,0.3)'}}>@503error_humannotfound</a>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
 
