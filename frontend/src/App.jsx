@@ -151,25 +151,25 @@ function App() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-card" 
-          style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="pro-card" 
+          style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}
         >
-          <div style={{ background: 'rgba(89, 0, 255, 0.1)', width: 60, height: 60, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-            <Lock className="text-primary" />
+          <div className="auth-lock-icon">
+            <Lock size={28} />
           </div>
-          <h1>Protected</h1>
-          <p className="subtitle" style={{ marginBottom: '1.5rem' }}>Enter the access key to unlock Strivers Quiz Studio.</p>
+          <h1>Protected Access</h1>
+          <p className="subtitle" style={{ marginBottom: '1.5rem' }}>Enter your credential key to access Strivers Quiz Studio.</p>
           
           <div className="form-group" style={{ marginBottom: '1rem' }}>
             <input 
               type="password" 
-              placeholder="Enter access key..." 
+              placeholder="••••••••" 
               value={authKey}
               onChange={(e) => setAuthKey(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)}
-              style={{ textAlign: 'center', letterSpacing: '4px' }}
+              style={{ textAlign: 'center', fontSize: '1.2rem' }}
             />
           </div>
 
@@ -178,16 +178,16 @@ function App() {
             onClick={() => verifyAuth(authKey)}
             disabled={isVerifying || !authKey}
           >
-            {isVerifying ? 'Verifying...' : 'Unlock Now'}
+            {isVerifying ? 'Verifying...' : 'Unlock Workspace'}
           </button>
 
           {authError && (
             <motion.p 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }}
-              style={{ color: 'var(--error)', marginTop: '1rem', fontSize: '0.875rem' }}
+              style={{ color: 'var(--error)', marginTop: '1.25rem', fontSize: '0.875rem', fontWeight: '500' }}
             >
-              <AlertCircle size={14} style={{ display: 'inline', marginRight: 4, transform: 'translateY(2px)' }} />
+              <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />
               {authError}
             </motion.p>
           )}
@@ -200,23 +200,23 @@ function App() {
   return (
     <div className="app-container">
       <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="glass-card"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="pro-card"
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1>Quiz Studio</h1>
-            <p className="subtitle">Transform your raw questions into premium Strivers-style PPTX.</p>
+            <p className="subtitle">AI-powered PPTX generator for Strivers educators.</p>
           </div>
-          <div title="Authenticated" style={{ color: 'var(--success)', opacity: 0.8 }}>
-            <ShieldCheck size={24} />
+          <div title="AuthenticatedSession" style={{ color: 'var(--primary)', opacity: 0.9 }}>
+            <ShieldCheck size={28} />
           </div>
         </div>
 
         <form onSubmit={handleGenerate}>
           <div className="form-group">
-            <label>1. SELECT TEMPLATE</label>
+            <label>1. Select Style Template</label>
             <div className="template-grid">
               {templates.map((t) => (
                 <div 
@@ -224,18 +224,18 @@ function App() {
                   className={`template-item ${template === t.number ? 'active' : ''}`}
                   onClick={() => setTemplate(t.number)}
                 >
-                  <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>T-{t.number}</div>
-                  <div style={{ fontWeight: 'bold' }}>Style {t.number}</div>
+                  <div style={{ fontSize: '0.7rem', opacity: 0.7, fontWeight: '700' }}>T-{t.number}</div>
+                  <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Template {t.number}</div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="form-group">
-            <label>2. PASTE QUESTIONS (RAW TEXT)</label>
+            <label>2. Quiz Questions (Raw Text)</label>
             <textarea 
               rows="8"
-              placeholder="Question 1... A) Option A..."
+              placeholder="Paste your questions here...&#10;1. What is React?&#10;A) Library&#10;B) Framework..."
               value={questions}
               onChange={(e) => setQuestions(e.target.value)}
               required
@@ -243,7 +243,7 @@ function App() {
           </div>
 
           <div className="form-group">
-            <label>3. TITLE IMAGE (OPTIONAL)</label>
+            <label>3. Branding Image (Optional)</label>
             <div style={{ position: 'relative' }}>
               <input 
                 type="file" 
@@ -258,18 +258,19 @@ function App() {
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '0.5rem', 
-                  padding: '1rem', 
-                  border: '2px dashed rgba(255,255,255,0.1)', 
-                  borderRadius: '0.75rem', 
+                  gap: '0.75rem', 
+                  padding: '0.875rem', 
+                  border: '1.5px dashed var(--border)', 
+                  borderRadius: '0.6rem', 
                   cursor: 'pointer',
                   justifyContent: 'center',
-                  color: 'var(--text-main)',
-                  background: 'rgba(255,255,255,0.02)'
+                  color: 'var(--text-muted)',
+                  background: '#fcfcfc',
+                  fontSize: '0.9rem'
                 }}
               >
-                <Upload size={20} />
-                {thumbnail ? thumbnail.name : 'Upload Thumbnail (JPG/PNG)'}
+                <Upload size={18} />
+                {thumbnail ? <span style={{ color: 'var(--text-main)' }}>{thumbnail.name}</span> : 'Upload cover or watermark'}
               </label>
             </div>
           </div>
@@ -282,12 +283,12 @@ function App() {
             {isGenerating ? (
               <>
                 <div className="loader"></div>
-                Generating...
+                Processing...
               </>
             ) : (
               <>
-                <Play size={20} fill="currentColor" />
-                Generate Now
+                <Play size={18} fill="currentColor" />
+                Generate Presentation
               </>
             )}
           </button>
@@ -295,28 +296,28 @@ function App() {
       </motion.div>
 
       <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="glass-card"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="pro-card"
         style={{ display: 'flex', flexDirection: 'column' }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.25rem' }}>Live Console</h2>
-          {isGenerating && <div className="loader" style={{ width: 16, height: 16 }}></div>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)' }}>Generation Status</h2>
+          {isGenerating && <div className="loader" style={{ width: 16, height: 16, borderTopColor: 'var(--primary)', borderLeftColor: 'rgba(0,0,0,0.1)', borderRightColor: 'rgba(0,0,0,0.1)', borderBottomColor: 'rgba(0,0,0,0.1)' }}></div>}
         </div>
 
         <div className="log-container">
           {logs.length === 0 && (
-            <div style={{ color: '#475569', textAlign: 'center', marginTop: '20%' }}>
-              Ready to generate...
+            <div style={{ color: '#64748b', textAlign: 'center', marginTop: '25%', fontSize: '0.9rem' }}>
+              System idle. Waiting for input...
             </div>
           )}
           {logs.map(log => (
             <div key={log.id} className="log-entry">
-              <span className="log-time">[{log.time}]</span>
+              <span className="log-time">{log.time}</span>
               <span className={`log-msg log-step-${log.step}`}>
-                {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 4 }} />}
-                {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 4 }} />}
+                {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
+                {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
                 {log.message}
               </span>
             </div>
@@ -333,18 +334,19 @@ function App() {
             >
               <a href={downloadUrl} className="download-link" download>
                 <FileDown size={20} />
-                Download Presentation
+                Download Final .pptx
               </a>
-              <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Your file is ready. Click above to save it.
+              <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Generation complete. Click above to save the file.
               </p>
             </motion.div>
           )}
         </AnimatePresence>
 
         {error && !isGenerating && (
-          <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.75rem', border: '1px solid var(--error)', color: 'var(--error)', fontSize: '0.9rem' }}>
-            <strong>Error:</strong> {error}
+          <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#fef2f2', borderRadius: '0.6rem', border: '1px solid #fee2e2', color: 'var(--error)', fontSize: '0.9rem', fontWeight: '500' }}>
+            <AlertCircle size={16} style={{ display: 'inline', marginRight: 8, transform: 'translateY(3px)' }} />
+            {error}
           </div>
         )}
       </motion.div>
