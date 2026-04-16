@@ -36,7 +36,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ── Gemini: format raw questions into structured JSON ─────────────────────
 async function formatQuestionsWithGemini(rawQuestions) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' });
 
   const prompt = `
 You are a bilingual quiz formatter for Bengali and English. 
