@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileDown, Play, AlertCircle, CheckCircle2, Lock, ShieldCheck, Zap, Sparkles, Terminal, Layers, Info } from 'lucide-react';
+import { Upload, FileDown, Play, AlertCircle, CheckCircle2, Lock, ShieldCheck, Zap, Layers, Terminal as ConsoleIcon, Info, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -20,6 +20,7 @@ function App() {
   
   const logEndRef = useRef(null);
 
+  // ── Auth Logic ──
   const verifyAuth = async (key) => {
     if (!key) return;
     setIsVerifying(true);
@@ -33,13 +34,12 @@ function App() {
       if (res.ok) {
         localStorage.setItem('striver_auth_key', key);
         setIsAuthenticated(true);
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#0A66C2', '#ffffff'] });
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#0A66C2', '#22d3ee'] });
       } else {
-        setAuthError('Invalid Access Key');
-        localStorage.removeItem('striver_auth_key');
+        setAuthError('Access Denied: Invalid Key');
       }
     } catch (err) {
-      setAuthError('Connection failed');
+      setAuthError('Network Error: Check connectivity');
     } finally {
       setIsVerifying(false);
     }
@@ -47,7 +47,6 @@ function App() {
 
   useEffect(() => {
     if (authKey) verifyAuth(authKey);
-    console.log("%cDeveloped and maintained by @503error_humannotfound", "color: #0A66C2; font-weight: bold; font-size: 12px;");
   }, []);
 
   useEffect(() => {
@@ -55,12 +54,15 @@ function App() {
       fetch('/api/templates', { headers: { 'x-auth-key': authKey } })
         .then(res => res.json())
         .then(data => setTemplates(data.templates || []))
-        .catch(err => { if (err.message.includes('401')) setIsAuthenticated(false); });
+        .catch(() => setIsAuthenticated(false));
     }
   }, [isAuthenticated]);
 
-  useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [logs]);
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
 
+  // ── Generation Logic ──
   const addLog = (msg, step = 'info') => {
     setLogs(prev => [...prev, {
       id: Date.now() + Math.random(),
@@ -76,7 +78,7 @@ function App() {
     setLogs([]);
     setDownloadUrl(null);
     setError(null);
-    addLog('Initializing Strivers Core Engine...', 'info');
+    addLog('Establishing link to Strivers Core...', 'info');
 
     const formData = new FormData();
     formData.append('questions', questions);
@@ -90,7 +92,7 @@ function App() {
         body: formData,
       });
 
-      if (response.status === 401) { setIsAuthenticated(false); throw new Error('Session expired'); }
+      if (response.status === 401) { setIsAuthenticated(false); throw new Error('Unauthorized'); }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
@@ -104,140 +106,151 @@ function App() {
               const data = JSON.parse(line.substring(6));
               if (data.error) { setError(data.error); addLog(data.error, 'error'); setIsGenerating(false); }
               else if (data.step === 'complete') {
-                addLog(data.message, 'complete');
+                addLog('Success: Assets generated successfully.', 'complete');
                 setDownloadUrl(data.downloadUrl);
                 setIsGenerating(false);
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                confetti({ particleCount: 150, spread: 100, origin: { y: 0.8 } });
               } else { addLog(data.message, data.step); }
             } catch (e) {}
           }
         });
       }
-    } catch (err) { setError(err.message); addLog(`Error: ${err.message}`, 'error'); setIsGenerating(false); }
+    } catch (err) {
+      setError(err.message);
+      addLog(`Failure: ${err.message}`, 'error');
+      setIsGenerating(false);
+    }
   };
 
+  // ── Auth UI ──
   if (!isAuthenticated) {
     return (
       <div className="auth-overlay">
-        <div className="mesh-bg" />
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="auth-card">
-          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" style={{ height: '50px', margin: '0 auto 2.5rem', display: 'block' }} />
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 900 }}>Internal Access</h1>
-          <p className="subtitle">Secure workspace for Strivers Content Engineers.</p>
-          <div className="form-group"><input type="password" placeholder="••••••••" value={authKey} onChange={(e) => setAuthKey(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)} style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.2em' }} /></div>
-          <button className="btn-primary" onClick={() => verifyAuth(authKey)} disabled={isVerifying || !authKey}>{isVerifying ? 'Validating...' : 'Unlock Workspace'}</button>
-          {authError && <p style={{ color: 'var(--error)', marginTop: '1rem', fontWeight: 600 }}>{authError}</p>}
+        <div className="midnight-bg" />
+        <div className="grid-overlay" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="auth-card">
+          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" style={{ height: '40px', filter: 'brightness(0) invert(1)', marginBottom: '2rem' }} />
+          <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Protected Access</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' }}>This studio is restricted to Strivers Content Team.</p>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <input type="password" placeholder="••••••••" value={authKey} onChange={(e) => setAuthKey(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && verifyAuth(authKey)} style={{ textAlign: 'center', fontSize: '1.2rem', letterSpacing: '0.3em' }} />
+          </div>
+          <button className="btn-primary" onClick={() => verifyAuth(authKey)} disabled={isVerifying || !authKey}>
+            {isVerifying ? <div className="loader" /> : 'Decrypt & Enter'}
+          </button>
+          {authError && <p style={{ color: 'var(--error)', marginTop: '1.25rem', fontSize: '0.8rem', fontWeight: 600 }}>{authError}</p>}
         </motion.div>
       </div>
     );
   }
 
+  // ── Main UI ──
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="mesh-bg" /><div className="noise" />
+      <div className="midnight-bg" />
+      <div className="grid-overlay" />
+      
       <header className="app-header">
-        <div className="header-logo-container">
-          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" style={{ height: '36px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" className="logo-img" />
+          <div className="nav-tag">STUDIO PRO</div>
         </div>
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0A66C2', fontWeight: 700, fontSize: '0.9rem' }}>
-            <Zap size={16} /> STUDIO v2.0
-          </div>
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0' }} />
-          <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>Internal Session <ShieldCheck size={14} style={{ display: 'inline', color: '#10b981', marginLeft: '4px' }} /></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <ShieldCheck size={14} style={{ color: '#22c55e' }} />
+          <span className="hide-mobile">Authenticated Session</span>
         </div>
       </header>
 
-      <main className="main-layout">
-        <div className="bento-grid">
-          {/* Info Card */}
-          <div className="bento-card info-section">
-            <div className="card-gradient-overlay" />
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#0A66C2', marginBottom: '1.5rem' }}>
-              <Info size={18} /> OPERATIONAL GUIDE
-            </h3>
-            <div className="tip-card" style={{ border: 'none', background: '#f8fafc', marginBottom: '1rem' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.8rem' }}>AI FORMATTING</p>
-              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>Engine automatically handles bilingual translations and option cleaning.</p>
+      <main className="main-content">
+        {/* Generator Section */}
+        <section className="span-8">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card">
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}><Zap size={18} fill="currentColor" /> Content Engine</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Convert raw educational text into high-engagement slides.</p>
             </div>
-            <div className="tip-card" style={{ border: 'none', background: '#f8fafc' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.8rem' }}>BATCH MODE</p>
-              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>Processed in high-concurrency mode. Max 10 slides per PPT recommended.</p>
-            </div>
-          </div>
 
-          {/* Template Card */}
-          <div className="bento-card templates-section">
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#0A66C2', marginBottom: '1.5rem' }}>
-              <Layers size={18} /> ASSET TEMPLATES
-            </h3>
-            <div className="template-flex">
-              {templates.map((t) => (
-                <div key={t.number} className={`template-btn ${template === t.number ? 'active' : ''}`} onClick={() => setTemplate(t.number)}>
-                  <Sparkles size={20} color={template === t.number ? '#0A66C2' : '#94a3b8'} />
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Style {t.number}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Generator Card */}
-          <div className="bento-card generator-section shimmer-bg">
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Zap fill="#0A66C2" color="#0A66C2" /> GENERATOR CORE
-            </h2>
             <form onSubmit={handleGenerate}>
-              <div className="form-group">
-                <label>QUIZ CONTENT BUFFER</label>
-                <textarea rows="10" placeholder="Paste raw content here..." value={questions} onChange={(e) => setQuestions(e.target.value)} required />
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label>1. Design Template</label>
+                <div className="template-scroll">
+                  {templates.map(t => (
+                    <div key={t.number} className={`template-item ${template === t.number ? 'active' : ''}`} onClick={() => setTemplate(t.number)}>
+                      <Sparkles size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Style {t.number}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="form-group">
-                <label>CUSTOM BRANDING (OPTIONAL)</label>
-                <input type="file" id="thumb-upload" hidden onChange={(e) => setThumbnail(e.target.files[0])} />
-                <label htmlFor="thumb-upload" style={{ border: '2px dashed #e2e8f0', borderRadius: '16px', padding: '1.5rem', cursor: 'pointer', textAlign: 'center', display: 'block', background: '#fcfcfc' }}>
-                  <Upload size={24} style={{ marginBottom: '0.5rem' }} />
-                  <p style={{ fontSize: '0.85rem' }}>{thumbnail ? thumbnail.name : 'Upload Custom Cover'}</p>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label>2. Quiz Data (Markdown or Text)</label>
+                <textarea rows="11" placeholder="Paste your questions here... (e.g. 1. What is JVM? A. B. C. D.)" value={questions} onChange={(e) => setQuestions(e.target.value)} required />
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <label>3. Visual Branding (Optional)</label>
+                <input type="file" id="thumb" hidden onChange={(e) => setThumbnail(e.target.files[0])} />
+                <label htmlFor="thumb" style={{ border: '1px dashed var(--border-color)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                  <Upload size={20} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                  <p style={{ fontSize: '0.8rem' }}>{thumbnail ? thumbnail.name : 'Drop brand cover image here'}</p>
                 </label>
               </div>
+
               <button type="submit" className="btn-primary" disabled={isGenerating || !questions}>
-                {isGenerating ? <div className="loader" /> : <><Play size={20} fill="white" /> INITIALIZE BUILD</>}
+                {isGenerating ? <div className="loader" /> : <><Play size={18} fill="white" /> Execute Production</>}
               </button>
             </form>
-          </div>
+          </motion.div>
+        </section>
 
-          {/* Runtime Card */}
-          <div className="bento-card runtime-section">
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#0A66C2', marginBottom: '1.5rem' }}>
-              <Terminal size={18} /> RUNTIME ENVIRONMENT
-            </h3>
-            <div className="modern-console">
-              {logs.length === 0 && <div style={{ color: '#475569' }}>SYSTEM_IDLE: Awaiting input buffer<span className="cursor" /></div>}
+        {/* Console Section */}
+        <section className="span-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card">
+            <h3 style={{ fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}><ConsoleIcon size={16} /> Runtime Console</h3>
+            <div className="console-box">
+              {logs.length === 0 && <div style={{ color: '#475569' }}>READY: Waiting for buffer instruction...</div>}
               {logs.map(log => (
-                <div key={log.id} style={{ marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#475569', fontSize: '0.7rem' }}>[{log.time}]</span>{' '}
-                  <span className={`log-step-${log.step}`}>{log.message}</span>
+                <div key={log.id} className="console-line">
+                  <span className="line-time">[{log.time}]</span>
+                  <span className={`line-msg msg-${log.step}`}>{log.message}</span>
                 </div>
               ))}
-              {isGenerating && <div className="cursor" />}
+              {isGenerating && <div style={{ width: '8px', height: '15px', background: 'var(--primary)', animation: 'spin 1s infinite' }} />}
               <div ref={logEndRef} />
             </div>
+
             <AnimatePresence>
               {downloadUrl && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ marginTop: '1.5rem' }}>
                   <a href={downloadUrl} className="btn-primary" style={{ background: '#10b981', boxShadow: 'none' }} download>
-                    <FileDown size={20} /> RETRIEVE PPTX
+                    <FileDown size={18} /> Retrieve PPTX
                   </a>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
+
+            {error && !isGenerating && (
+              <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', color: '#f87171', fontSize: '0.8rem' }}>
+                <strong>CRITICAL_ERROR:</strong> {error}
+              </div>
+            )}
+
+            <div style={{ marginTop: '2rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1rem' }}>Guidelines</div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}><Info size={12} style={{ flexShrink: 0 }} /> PPTX will be generated based on Strivers theme.</div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}><Info size={12} style={{ flexShrink: 0 }} /> AI optimizes for readable text density automatically.</div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
       </main>
 
-      <footer className="modern-footer">
-        <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" style={{ height: '30px', opacity: 0.5, marginBottom: '1rem' }} />
-        <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500 }}>© {new Date().getFullYear()} Strivers EdTech. Core Engine v2.0.4. All systems operational.</p>
-        <div className="dev-badge">
+      <footer className="footer">
+        <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" className="footer-logo" />
+        <p style={{ fontSize: '0.8rem', color: '#475569' }}>© {new Date().getFullYear()} Strivers EdTech Internal Portal. Proprietary Tools.</p>
+        <div className="credits-badge">
           developed and maintained by @503error_humannotfound
         </div>
       </footer>
