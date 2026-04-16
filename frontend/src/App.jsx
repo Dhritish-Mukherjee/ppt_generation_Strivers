@@ -149,20 +149,17 @@ function App() {
   // ── Render Unlock Screen ──
   if (!isAuthenticated) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+      <div className="auth-overlay">
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="pro-card" 
-          style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}
+          className="auth-card"
         >
-          <div className="auth-lock-icon">
-            <Lock size={28} />
-          </div>
-          <h1>Protected Access</h1>
-          <p className="subtitle" style={{ marginBottom: '1.5rem' }}>Enter your credential key to access Strivers Quiz Studio.</p>
+          <div className="strivers-logo-placeholder" style={{ margin: '0 auto 1.5rem', width: 60, height: 60, fontSize: '1.8rem' }}>S</div>
+          <h1 style={{ fontSize: '1.5rem' }}>Protected Access</h1>
+          <p className="subtitle" style={{ marginBottom: '2rem' }}>Enter the credential key provided by the Strivers internal team.</p>
           
-          <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <input 
               type="password" 
               placeholder="••••••••" 
@@ -185,7 +182,7 @@ function App() {
             <motion.p 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }}
-              style={{ color: 'var(--error)', marginTop: '1.25rem', fontSize: '0.875rem', fontWeight: '500' }}
+              style={{ color: 'var(--error)', marginTop: '1.25rem', fontSize: '0.875rem', fontWeight: '600' }}
             >
               <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />
               {authError}
@@ -198,158 +195,191 @@ function App() {
 
   // ── Render Main App ──
   return (
-    <div className="app-container">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="pro-card"
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div>
+      <header className="app-header">
+        <div className="brand-container">
+          <div className="strivers-logo-placeholder">S</div>
           <div>
-            <h1>Quiz Studio</h1>
-            <p className="subtitle">AI-powered PPTX generator for Strivers educators.</p>
-          </div>
-          <div title="AuthenticatedSession" style={{ color: 'var(--primary)', opacity: 0.9 }}>
-            <ShieldCheck size={28} />
+            <span className="brand-name">Strivers</span>
+            <span className="brand-tag">Studio</span>
           </div>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          <ShieldCheck size={18} style={{ color: 'var(--success)' }} />
+          <span>Internal Access Active</span>
+        </div>
+      </header>
 
-        <form onSubmit={handleGenerate}>
-          <div className="form-group">
-            <label>1. Select Style Template</label>
-            <div className="template-grid">
-              {templates.map((t) => (
-                <div 
-                  key={t.number}
-                  className={`template-item ${template === t.number ? 'active' : ''}`}
-                  onClick={() => setTemplate(t.number)}
-                >
-                  <div style={{ fontSize: '0.7rem', opacity: 0.7, fontWeight: '700' }}>T-{t.number}</div>
-                  <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Template {t.number}</div>
+      <div className="main-layout">
+        <aside className="sidebar-left">
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">How it works</h3>
+            <div className="tip-card">
+              <span className="tip-label">PRO TIP</span>
+              <p>Paste raw text directly from your PDFs or word docs. The AI will automatically clean up the formatting.</p>
+            </div>
+            <div className="tip-card">
+              <span className="tip-label">BILINGUAL</span>
+              <p>The engine handles both English and Bengali translations simultaneously to keep your slides consistent.</p>
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Formatting Rules</h3>
+            <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li style={{ marginBottom: '0.5rem' }}>Options should start with A, B, C, D or 1, 2, 3, 4.</li>
+              <li style={{ marginBottom: '0.5rem' }}>Template images are automatically centered.</li>
+              <li style={{ marginBottom: '0.5rem' }}>Max 10 questions per batch recommended.</li>
+            </ul>
+          </div>
+        </aside>
+
+        <main className="content-area">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="pro-card"
+          >
+            <div>
+              <h1>Generator</h1>
+              <p className="subtitle">AI-powered Quiz PPTX creation tool.</p>
+            </div>
+
+            <form onSubmit={handleGenerate}>
+              <div className="form-group">
+                <label>1. Select Style Template</label>
+                <div className="template-grid">
+                  {templates.map((t) => (
+                    <div 
+                      key={t.number}
+                      className={`template-item ${template === t.number ? 'active' : ''}`}
+                      onClick={() => setTemplate(t.number)}
+                    >
+                      <div style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: '800' }}>STYLE</div>
+                      <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>Template {t.number}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>2. Quiz Questions (Raw Text)</label>
+                <textarea 
+                  rows="8"
+                  placeholder="Paste your raw content...&#10;1. First Question?&#10;A) Option 1..."
+                  value={questions}
+                  onChange={(e) => setQuestions(e.target.value)}
+                  required
+                ></textarea>
+              </div>
+
+              <div className="form-group">
+                <label>3. Title Slide Image (Optional)</label>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="file" 
+                    className="custom-file-input"
+                    id="thumb-upload"
+                    accept="image/*"
+                    onChange={(e) => setThumbnail(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                  <label 
+                    htmlFor="thumb-upload" 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.75rem', 
+                      padding: '0.875rem', 
+                      border: '1.5px dashed var(--border-rich)', 
+                      borderRadius: '10px', 
+                      cursor: 'pointer',
+                      justifyContent: 'center',
+                      color: 'var(--text-muted)',
+                      background: '#fff',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <Upload size={18} />
+                    {thumbnail ? <span style={{ color: 'var(--text-dark)' }}>{thumbnail.name}</span> : 'Select custom cover image'}
+                  </label>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="generate-btn" 
+                disabled={isGenerating || !questions}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="loader"></div>
+                    Engine Running...
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} fill="currentColor" />
+                    Process & Generate
+                  </>
+                )}
+              </button>
+            </form>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="pro-card"
+            style={{ display: 'flex', flexDirection: 'column' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Engine Runtime</h2>
+              {isGenerating && <div className="loader" style={{ width: 16, height: 16, borderTopColor: 'var(--primary)', borderLeftColor: 'var(--border-rich)', borderRightColor: 'var(--border-rich)', borderBottomColor: 'var(--border-rich)' }}></div>}
+            </div>
+
+            <div className="log-container">
+              {logs.length === 0 && (
+                <div style={{ color: '#64748b', textAlign: 'center', marginTop: '25%', fontSize: '0.9rem' }}>
+                  Ready to process batch.
+                </div>
+              )}
+              {logs.map(log => (
+                <div key={log.id} className="log-entry">
+                  <span className="log-time">{log.time}</span>
+                  <span className={`log-msg log-step-${log.step}`}>
+                    {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
+                    {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
+                    {log.message}
+                  </span>
                 </div>
               ))}
+              <div ref={logEndRef} />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>2. Quiz Questions (Raw Text)</label>
-            <textarea 
-              rows="8"
-              placeholder="Paste your questions here...&#10;1. What is React?&#10;A) Library&#10;B) Framework..."
-              value={questions}
-              onChange={(e) => setQuestions(e.target.value)}
-              required
-            ></textarea>
-          </div>
+            <AnimatePresence>
+              {downloadUrl && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  style={{ textAlign: 'center' }}
+                >
+                  <a href={downloadUrl} className="download-link" download>
+                    <FileDown size={20} />
+                    Download Final PPTX
+                  </a>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <div className="form-group">
-            <label>3. Branding Image (Optional)</label>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="file" 
-                className="custom-file-input"
-                id="thumb-upload"
-                accept="image/*"
-                onChange={(e) => setThumbnail(e.target.files[0])}
-                style={{ display: 'none' }}
-              />
-              <label 
-                htmlFor="thumb-upload" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.75rem', 
-                  padding: '0.875rem', 
-                  border: '1.5px dashed var(--border)', 
-                  borderRadius: '0.6rem', 
-                  cursor: 'pointer',
-                  justifyContent: 'center',
-                  color: 'var(--text-muted)',
-                  background: '#fcfcfc',
-                  fontSize: '0.9rem'
-                }}
-              >
-                <Upload size={18} />
-                {thumbnail ? <span style={{ color: 'var(--text-main)' }}>{thumbnail.name}</span> : 'Upload cover or watermark'}
-              </label>
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            className="generate-btn" 
-            disabled={isGenerating || !questions}
-          >
-            {isGenerating ? (
-              <>
-                <div className="loader"></div>
-                Processing...
-              </>
-            ) : (
-              <>
-                <Play size={18} fill="currentColor" />
-                Generate Presentation
-              </>
+            {error && !isGenerating && (
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fef2f2', borderRadius: '10px', border: '1px solid #fee2e2', color: 'var(--error)', fontSize: '0.85rem', fontWeight: '600' }}>
+                <AlertCircle size={16} style={{ display: 'inline', marginRight: 8, transform: 'translateY(3px)' }} />
+                RUNTIME ERROR: {error}
+              </div>
             )}
-          </button>
-        </form>
-      </motion.div>
-
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="pro-card"
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)' }}>Generation Status</h2>
-          {isGenerating && <div className="loader" style={{ width: 16, height: 16, borderTopColor: 'var(--primary)', borderLeftColor: 'rgba(0,0,0,0.1)', borderRightColor: 'rgba(0,0,0,0.1)', borderBottomColor: 'rgba(0,0,0,0.1)' }}></div>}
-        </div>
-
-        <div className="log-container">
-          {logs.length === 0 && (
-            <div style={{ color: '#64748b', textAlign: 'center', marginTop: '25%', fontSize: '0.9rem' }}>
-              System idle. Waiting for input...
-            </div>
-          )}
-          {logs.map(log => (
-            <div key={log.id} className="log-entry">
-              <span className="log-time">{log.time}</span>
-              <span className={`log-msg log-step-${log.step}`}>
-                {log.step === 'complete' && <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
-                {log.step === 'error' && <AlertCircle size={14} style={{ display: 'inline', marginRight: 6, transform: 'translateY(2px)' }} />}
-                {log.message}
-              </span>
-            </div>
-          ))}
-          <div ref={logEndRef} />
-        </div>
-
-        <AnimatePresence>
-          {downloadUrl && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{ textAlign: 'center' }}
-            >
-              <a href={downloadUrl} className="download-link" download>
-                <FileDown size={20} />
-                Download Final .pptx
-              </a>
-              <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Generation complete. Click above to save the file.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {error && !isGenerating && (
-          <div style={{ marginTop: '1.25rem', padding: '1rem', background: '#fef2f2', borderRadius: '0.6rem', border: '1px solid #fee2e2', color: 'var(--error)', fontSize: '0.9rem', fontWeight: '500' }}>
-            <AlertCircle size={16} style={{ display: 'inline', marginRight: 8, transform: 'translateY(3px)' }} />
-            {error}
-          </div>
-        )}
-      </motion.div>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 }
