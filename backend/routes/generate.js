@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { execFile } = require('child_process');
+const { spawn } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -35,8 +35,10 @@ const upload = multer({
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ── Gemini: format raw questions into structured JSON ─────────────────────
-async function formatQuestionsWithGemini(rawQuestions) {
+async function formatQuestionsWithGemini(rawQuestions, onProgress) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+
+  onProgress({ step: 'formatting', message: 'Gemini is structuring & translating questions...' });
 
   const prompt = `
 You are a bilingual quiz formatter for Bengali and English. 
@@ -77,16 +79,18 @@ ${rawQuestions}
   try {
     const parsed = JSON.parse(clean);
     if (!Array.isArray(parsed)) throw new Error('Response is not a JSON array');
+    onProgress({ step: 'formatting_complete', message: `Gemini successfully formatted ${parsed.length} questions.` });
     return parsed;
   } catch (err) {
     throw new Error(`Gemini returned invalid JSON: ${err.message}\n\nRaw response:\n${text}`);
   }
 }
 
-// ── Run Python script ─────────────────────────────────────────────────────
-function runPythonScript({ templatePath, questionsPath, outputPath, imagePath }) {
+// ── Run Python script with streaming output ───────────────────────────────
+function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, imagePath }, onProgress) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, '..', 'scripts', 'generate_pptx.py');
+    const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
 
     const args = [
       scriptPath,
@@ -99,37 +103,63 @@ function runPythonScript({ templatePath, questionsPath, outputPath, imagePath })
       args.push('--image', imagePath);
     }
 
-    // Try 'python3' first, fall back to 'python'
-    const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
+    onProgress({ step: 'python_start', message: 'Starting PowerPoint engine...' });
 
-    execFile(pythonBin, args, { timeout: 120000 }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Python stderr:', stderr);
-        console.error('Python error:', error.message);
-        return reject(new Error(`Python script failed: ${stderr || error.message}`));
+    const pyProcess = spawn(pythonBin, args);
+
+    pyProcess.stdout.on('data', (data) => {
+      const lines = data.toString().split('\n');
+      lines.forEach(line => {
+        if (line.trim()) {
+          // Send raw python logs to frontend
+          onProgress({ step: 'python_log', message: line.trim() });
+        }
+      });
+    });
+
+    pyProcess.stderr.on('data', (data) => {
+      console.error(`Python Stderr: ${data}`);
+    });
+
+    pyProcess.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Python script exited with code ${code}`));
       }
-      console.log('Python stdout:', stdout);
-      resolve(stdout);
     });
   });
 }
 
-// ── POST /api/generate ────────────────────────────────────────────────────
+// ── SSE /api/generate-stream ──────────────────────────────────────────────
 router.post('/generate', upload.single('thumbnail'), async (req, res) => {
+  // Use unique ID for session
   const sessionId = uuidv4();
   let thumbnailPath = null;
   let questionsFilePath = null;
   let outputFilePath = null;
+
+  // Set up SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no' // Prevents Render/Nginx from buffering the stream
+  });
+
+  const sendEvent = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
 
   try {
     const { templateNumber, questions: rawQuestions } = req.body;
 
     // ── Validate inputs ──
     if (!templateNumber) {
-      return res.status(400).json({ error: 'templateNumber is required' });
+      return sendEvent({ error: 'templateNumber is required' });
     }
     if (!rawQuestions || rawQuestions.trim().length === 0) {
-      return res.status(400).json({ error: 'questions field is required' });
+      return sendEvent({ error: 'questions field is required' });
     }
 
     // ── Resolve template path ──
@@ -137,69 +167,53 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
     const templatePath = path.join(__dirname, '..', 'templates', templateFileName);
 
     if (!fs.existsSync(templatePath)) {
-      return res.status(404).json({
-        error: `Template ${templateNumber} not found. Available templates should be placed in the /templates folder as template1.pptx, template2.pptx, etc.`
-      });
+      return sendEvent({ error: `Template ${templateNumber} not found.` });
     }
 
-    // ── Thumbnail path (if uploaded) ──
+    // ── Thumbnail path ──
     if (req.file) {
       thumbnailPath = req.file.path;
     }
 
-    // ── Step 1: Format questions with Gemini ──
-    console.log(`[${sessionId}] Calling Gemini to format ${rawQuestions.length} chars of raw questions...`);
-    let formattedQuestions;
-    try {
-      formattedQuestions = await formatQuestionsWithGemini(rawQuestions);
-    } catch (geminiErr) {
-      return res.status(500).json({ error: `Gemini formatting failed: ${geminiErr.message}` });
-    }
-    console.log(`[${sessionId}] Gemini returned ${formattedQuestions.length} questions.`);
+    // ── Step 1: Gemini ──
+    const formattedQuestions = await formatQuestionsWithGemini(rawQuestions, sendEvent);
 
-    // ── Step 2: Write questions.json to disk ──
+    // ── Step 2: Write JSON ──
     questionsFilePath = path.join(__dirname, '..', 'outputs', `questions_${sessionId}.json`);
     fs.writeFileSync(questionsFilePath, JSON.stringify(formattedQuestions, null, 2), 'utf-8');
 
-    // ── Step 3: Run Python script ──
+    // ── Step 3: Run Python ──
     outputFilePath = path.join(__dirname, '..', 'outputs', `quiz_${sessionId}.pptx`);
-
-    console.log(`[${sessionId}] Running Python script...`);
-    await runPythonScript({
+    await runPythonScriptStreaming({
       templatePath,
       questionsPath: questionsFilePath,
       outputPath: outputFilePath,
       imagePath: thumbnailPath || null,
-    });
+    }, sendEvent);
 
-    // ── Step 4: Stream file back as download ──
+    // ── Step 4: Finalize ──
     if (!fs.existsSync(outputFilePath)) {
-      return res.status(500).json({ error: 'Output file was not generated by the Python script.' });
+      throw new Error('Output file was not generated.');
     }
 
-    const fileName = `quiz_output_${Date.now()}.pptx`;
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    // We don't delete the output file immediately because the user needs to download it via the URL
+    // We'll return the filename so frontend can construct the download link
+    const downloadUrl = `/outputs/quiz_${sessionId}.pptx`;
+    sendEvent({ step: 'complete', message: 'Generation successful!', downloadUrl });
 
-    const fileStream = fs.createReadStream(outputFilePath);
-    fileStream.pipe(res);
-
-    fileStream.on('end', () => {
-      // Cleanup temp files after sending
-      cleanup([thumbnailPath, questionsFilePath, outputFilePath]);
-    });
-
-    fileStream.on('error', (err) => {
-      console.error('Stream error:', err);
-      cleanup([thumbnailPath, questionsFilePath, outputFilePath]);
-    });
+    // Cleanup temp input files
+    cleanup([thumbnailPath, questionsFilePath]);
+    
+    // Note: in a real app, we'd have a cron job to clean up /outputs after an hour.
+    // For now we leave it so the link works.
+    
+    res.end();
 
   } catch (err) {
-    console.error('Unexpected error:', err);
+    console.error('Generation Error:', err);
+    sendEvent({ error: err.message || 'Internal server error' });
     cleanup([thumbnailPath, questionsFilePath, outputFilePath]);
-    if (!res.headersSent) {
-      res.status(500).json({ error: err.message || 'Internal server error' });
-    }
+    res.end();
   }
 });
 
@@ -220,9 +234,10 @@ router.get('/templates', (req, res) => {
   if (!fs.existsSync(templatesDir)) return res.json({ templates: [] });
 
   const files = fs.readdirSync(templatesDir)
-    .filter(f => f.match(/^template\d+\.pptx$/i))
+    .filter(f => f.match(/^template\d*\.pptx$/i))
     .map(f => {
-      const num = f.match(/^template(\d+)\.pptx$/i)[1];
+      const match = f.match(/^template(\d+)\.pptx$/i);
+      const num = match ? match[1] : '1';
       return { number: num, filename: f };
     });
 

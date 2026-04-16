@@ -1,4 +1,12 @@
-# ── Stage: Final image with Node.js + Python ──────────────────────────────
+# ── Stage 1: Build Frontend ───────────────────────────────────────────────
+FROM node:20-slim AS frontend-builder
+WORKDIR /build/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# ── Stage 2: Final image with Node.js + Python ────────────────────────────
 FROM node:20-slim
 
 # Install Python 3 and pip
@@ -26,8 +34,9 @@ RUN npm install --omit=dev
 # Copy backend source
 COPY backend/ .
 
-# Copy frontend source so the backend can serve it
-COPY frontend/ /frontend/
+# Copy built frontend from Stage 1
+COPY --from=frontend-builder /build/frontend/dist /frontend/dist
+
 # Create required directories
 RUN mkdir -p outputs templates
 
