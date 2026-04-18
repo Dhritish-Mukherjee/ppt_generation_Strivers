@@ -22,6 +22,7 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState(null);
   
   const logEndRef = useRef(null);
+  const consoleBoxRef = useRef(null);
 
   // ── Auth Logic ──
   const verifyAuth = async (key) => {
@@ -62,7 +63,13 @@ function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const box = consoleBoxRef.current;
+    if (!box) return;
+    // Only auto-scroll if user is already near the bottom (within 80px)
+    const isNearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    if (isNearBottom) {
+      logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [logs]);
 
   // ── Generation Logic ──
@@ -133,7 +140,7 @@ function App() {
         <div className="midnight-bg" />
         <div className="grid-overlay" />
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="auth-card">
-          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" style={{ height: '40px', filter: 'brightness(0) invert(1)', marginBottom: '2rem' }} />
+          <img src="/striversLogo.png" alt="Strivers" style={{ height: '40px', marginBottom: '2rem' }} />
           <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Protected Access</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' }}>This studio is restricted to Strivers Content Team.</p>
           <div style={{ marginBottom: '1.5rem' }}>
@@ -156,7 +163,7 @@ function App() {
       
       <header className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" className="logo-img" />
+          <img src="/striversLogo.png" alt="Strivers" className="logo-img" />
           <div className="nav-tag">STUDIO PRO</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -277,7 +284,7 @@ function App() {
         <section className="span-4">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card">
             <h3 style={{ fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}><ConsoleIcon size={16} /> Runtime Console</h3>
-            <div className="console-box">
+            <div className="console-box" ref={consoleBoxRef}>
               {logs.length === 0 && <div style={{ color: '#475569' }}>READY: Waiting for buffer instruction...</div>}
               {logs.map(log => (
                 <div key={log.id} className="console-line">
@@ -317,7 +324,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <img src="https://striver.careers/wp-content/uploads/2023/12/Striver_Logo_Horizontal_Dark.png" alt="Strivers" className="footer-logo" />
+        <img src="/striversLogo.png" alt="Strivers" className="footer-logo" />
         <p style={{ fontSize: '0.8rem', color: '#475569' }}>© {new Date().getFullYear()} Strivers EdTech Internal Portal. Proprietary Tools.</p>
         <div className="credits-badge">
           developed and maintained by @503error_humannotfound
