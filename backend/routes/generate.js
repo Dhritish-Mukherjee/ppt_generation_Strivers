@@ -34,11 +34,11 @@ const upload = multer({
 // ── Gemini setup ──────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ── Gemini: format raw questions into structured JSON ─────────────────────
-async function formatQuestionsWithGemini(rawQuestions, onProgress) {
+// ── AI Engine: format raw questions into structured JSON ──────────────────
+async function formatQuestionsWithAI(rawQuestions, onProgress) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-  onProgress({ step: 'formatting', message: 'Gemini is structuring & translating questions...' });
+  onProgress({ step: 'formatting', message: '🧠 AI Engine is structuring & translating questions...' });
 
   const prompt = `
 You are a bilingual quiz formatter for Bengali and English. 
@@ -73,16 +73,16 @@ ${rawQuestions}
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
 
-  // Strip markdown fences if Gemini adds them anyway
+  // Strip markdown fences if AI adds them
   const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
   try {
     const parsed = JSON.parse(clean);
     if (!Array.isArray(parsed)) throw new Error('Response is not a JSON array');
-    onProgress({ step: 'formatting_complete', message: `Gemini successfully formatted ${parsed.length} questions.` });
+    onProgress({ step: 'formatting_complete', message: `✅ AI Engine successfully formatted ${parsed.length} questions.` });
     return parsed;
   } catch (err) {
-    throw new Error(`Gemini returned invalid JSON: ${err.message}\n\nRaw response:\n${text}`);
+    throw new Error(`AI Engine returned invalid JSON: ${err.message}`);
   }
 }
 
@@ -110,10 +110,30 @@ function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, ima
     pyProcess.stdout.on('data', (data) => {
       const lines = data.toString().split('\n');
       lines.forEach(line => {
-        if (line.trim()) {
-          // Send raw python logs to frontend
-          onProgress({ step: 'python_log', message: line.trim() });
-        }
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        // Sanitize Python logs: strip internal file paths and clean up output
+        let cleaned = trimmed
+          .replace(/\/app\/outputs\/[^\s]+/g, '')   // strip /app/outputs/... paths
+          .replace(/\/[^\s]*outputs\/[^\s]+/g, '')  // strip any outputs paths
+          .replace(/\s{2,}/g, ' ')                   // collapse extra whitespace
+          .trim();
+
+        // Skip lines that are now empty after sanitization
+        if (!cleaned || cleaned === '✓' || cleaned === '✅') return;
+
+        // Beautify common Python log patterns
+        cleaned = cleaned
+          .replace(/^✅ Saved successfully\.$/, '✅ PowerPoint saved successfully.')
+          .replace(/^✓ Cover image replaced successfully\.$/, '🖼️ Cover image applied to slide 1.')
+          .replace(/^✓ Cover image replaced with:.*$/, '🖼️ Cover image applied to slide 1.')
+          .replace(/^Loaded (\d+) question/, '📋 Loaded $1 question')
+          .replace(/^Filling slides with question content/, '⚡ Populating slides with content')
+          .replace(/^Slide plan:/, '📐 Slide plan:')
+          .replace(/^Batch size:/, '📦 Batch size:');
+
+        onProgress({ step: 'python_log', message: cleaned });
       });
     });
 
@@ -199,15 +219,17 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
       thumbnailPath = req.file.path;
     }
 
-    // ── Step 1: Gemini ──
-    const formattedQuestions = await formatQuestionsWithGemini(rawQuestions, sendEvent);
+    // ── Step 1: AI Engine ──
+    const formattedQuestions = await formatQuestionsWithAI(rawQuestions, sendEvent);
 
     // ── Step 2: Write JSON ──
     questionsFilePath = path.join(__dirname, '..', 'outputs', `questions_${sessionId}.json`);
     fs.writeFileSync(questionsFilePath, JSON.stringify(formattedQuestions, null, 2), 'utf-8');
 
     // ── Step 3: Run Python ──
-    outputFilePath = path.join(__dirname, '..', 'outputs', `quiz_${sessionId}.pptx`);
+    const outputName = (req.body.outputName || '').trim().replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '_') || `quiz_${sessionId}`;
+    const outputFileName = `${outputName}_${sessionId}.pptx`;
+    outputFilePath = path.join(__dirname, '..', 'outputs', outputFileName);
     await runPythonScriptStreaming({
       templatePath,
       questionsPath: questionsFilePath,
@@ -220,9 +242,8 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
       throw new Error('Output file was not generated.');
     }
 
-    // We don't delete the output file immediately because the user needs to download it via the URL
-    // We'll return the filename so frontend can construct the download link
-    const downloadUrl = `/outputs/quiz_${sessionId}.pptx`;
+    // Return the download link with the user-chosen name
+    const downloadUrl = `/outputs/${outputFileName}`;
     sendEvent({ step: 'complete', message: 'Generation successful!', downloadUrl });
 
     // Cleanup temp input files

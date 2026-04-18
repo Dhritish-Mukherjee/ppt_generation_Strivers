@@ -258,7 +258,8 @@ def replace_cover_image(slide, image_path):
                 old_el.addprevious(new_el)
                 old_el.getparent().remove(old_el)
 
-                print(f'  ✓ Cover image replaced with: {image_path}')
+                print('  ✓ Cover image replaced successfully.')
+                # Note: avoid printing file path — it's internal
                 return
             except Exception:
                 continue
@@ -307,7 +308,7 @@ def main():
     with open(args.questions, 'r', encoding='utf-8') as f:
         questions = json.load(f)
 
-    print(f'Loaded {len(questions)} question(s) from {args.questions}')
+    print(f'Loaded {len(questions)} question(s)')
     print(f'Batch size: {args.batch} questions per promo slide')
 
     # ── Use python-pptx to clone slides ───────────────────────────────────
@@ -422,9 +423,8 @@ def main():
             print(f'  ── Promotional slide')
 
     prs.save(args.output)
-    print(f'\n✅ Saved: {args.output}')
     total = 1 + len(new_slides)  # cover + content
-    print(f'   Total slides: {total}')
+    print(f'\n✅ Saved successfully. Total slides: {total}')
 
 
 if __name__ == '__main__':

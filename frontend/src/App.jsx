@@ -11,6 +11,7 @@ function App() {
 
   const [questions, setQuestions] = useState('');
   const [thumbnail, setThumbnail] = useState(null);
+  const [outputName, setOutputName] = useState('Strivers_Quiz');
   const [template, setTemplate] = useState('master');
   const [templates, setTemplates] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -85,6 +86,7 @@ function App() {
     const formData = new FormData();
     formData.append('questions', questions);
     formData.append('templateNumber', template);
+    formData.append('outputName', outputName || 'Strivers_Quiz');
     if (thumbnail) formData.append('thumbnail', thumbnail);
 
     try {
@@ -244,13 +246,24 @@ function App() {
                 <textarea rows="11" placeholder="Paste your questions here... (e.g. 1. What is JVM? A. B. C. D.)" value={questions} onChange={(e) => setQuestions(e.target.value)} required />
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
                 <label>3. Cover Image (Optional)</label>
                 <input type="file" id="thumb" hidden onChange={(e) => setThumbnail(e.target.files[0])} accept="image/*" />
                 <label htmlFor="thumb" style={{ border: '1px dashed var(--border-color)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,0.02)', display: 'block' }}>
                   <Upload size={20} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
                   <p style={{ fontSize: '0.8rem', margin: 0 }}>{thumbnail ? thumbnail.name : 'Drop cover image here — replaces slide 1 picture'}</p>
                 </label>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <label>4. Output File Name</label>
+                <input 
+                  type="text" 
+                  value={outputName} 
+                  onChange={(e) => setOutputName(e.target.value)} 
+                  placeholder="e.g. Science_Quiz_01" 
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: 'white', marginTop: '0.5rem' }} 
+                />
               </div>
 
               <button type="submit" className="btn-primary" disabled={isGenerating || !questions}>
@@ -279,7 +292,7 @@ function App() {
             <AnimatePresence>
               {downloadUrl && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ marginTop: '1.5rem' }}>
-                  <a href={downloadUrl} className="btn-primary" style={{ background: '#10b981', boxShadow: 'none' }} download>
+                  <a href={downloadUrl} className="btn-primary" style={{ background: '#10b981', boxShadow: 'none' }} download={outputName ? `${outputName}.pptx` : 'Strivers_Quiz.pptx'}>
                     <FileDown size={18} /> Retrieve PPTX
                   </a>
                 </motion.div>
