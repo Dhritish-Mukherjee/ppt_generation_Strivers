@@ -83,8 +83,7 @@ function App() {
     const formData = new FormData();
     formData.append('questions', questions);
     formData.append('templateNumber', template);
-    // Removed legacy branding upload as it is now handled via slide master
-    // if (thumbnail) formData.append('thumbnail', thumbnail);
+    if (thumbnail) formData.append('thumbnail', thumbnail);
 
     try {
       const response = await fetch('/api/generate', {
@@ -196,12 +195,13 @@ function App() {
                 <textarea rows="11" placeholder="Paste your questions here... (e.g. 1. What is JVM? A. B. C. D.)" value={questions} onChange={(e) => setQuestions(e.target.value)} required />
               </div>
 
-              {/* Visual Branding is now baked into the slide_master.pptx */}
-              <div style={{ padding: '1.5rem', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>Dynamic Branding Enabled</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                  The engine is using the high-fidelity <strong>Strivers Slide Master</strong> which includes automatic layout management and promotional slide insertion.
-                </p>
+              <div style={{ marginBottom: '2rem' }}>
+                <label>3. Cover Image (Optional)</label>
+                <input type="file" id="thumb" hidden onChange={(e) => setThumbnail(e.target.files[0])} accept="image/*" />
+                <label htmlFor="thumb" style={{ border: '1px dashed var(--border-color)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,0.02)', display: 'block' }}>
+                  <Upload size={20} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                  <p style={{ fontSize: '0.8rem', margin: 0 }}>{thumbnail ? thumbnail.name : 'Drop cover image here — replaces slide 1 picture'}</p>
+                </label>
               </div>
 
               <button type="submit" className="btn-primary" disabled={isGenerating || !questions}>

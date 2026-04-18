@@ -39,6 +39,7 @@ import os
 import re
 import sys
 from lxml import etree
+from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 # ── Namespace map used throughout ─────────────────────────────────────────
 NS = {
@@ -222,6 +223,40 @@ def _fill_options(sp, question, opt_en_sz, opt_bn_sz):
         p.append(_make_run(rPr_template, 'en-US', ')', opt_bn_sz, bold=True))
 
 
+# ── Cover image replacement ───────────────────────────────────────────────
+
+def replace_cover_image(slide, image_path):
+    """
+    Replace the first picture found on the cover slide with the user-supplied
+    image, preserving position, size, and z-order.
+    """
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+    for shape in slide.shapes:
+        is_pic     = (shape.shape_type == MSO_SHAPE_TYPE.PICTURE)
+        is_ph_pic  = (shape.is_placeholder and hasattr(shape, 'image'))
+        is_named   = ('Picture' in shape.name or 'Image' in shape.name)
+
+        if is_pic or is_ph_pic or is_named:
+            try:
+                left, top     = shape.left, shape.top
+                width, height = shape.width, shape.height
+                old_el        = shape._element
+
+                new_pic = slide.shapes.add_picture(image_path, left, top, width, height)
+                new_el  = new_pic._element
+
+                # Keep the new picture at the same z-order slot as the old one
+                old_el.addprevious(new_el)
+                old_el.getparent().remove(old_el)
+
+                print(f'  ✓ Cover image replaced with: {image_path}')
+                return
+            except Exception:
+                continue
+
+    print('  ⚠ No picture shape found on cover slide to replace.')
+
+
 # ── PPTX manipulation via python-pptx ─────────────────────────────────────
 
 def _build_slide_sequence(num_questions, batch_size=5):
@@ -247,6 +282,7 @@ def main():
     parser.add_argument('--template',  default='slide_master.pptx', help='Path to slide_master.pptx')
     parser.add_argument('--questions', default='questions.json',    help='Path to questions JSON')
     parser.add_argument('--output',    default='output.pptx',       help='Output file name')
+    parser.add_argument('--image',     default=None,                help='Path to cover image (replaces slide 1 picture)')
     parser.add_argument('--batch',     default=5, type=int,         help='Questions per batch before a promo slide (default 5)')
     args = parser.parse_args()
 
@@ -255,6 +291,9 @@ def main():
         if not os.path.exists(path):
             print(f'❌ {label} file not found: {path}')
             sys.exit(1)
+    if args.image and not os.path.exists(args.image):
+        print(f'❌ Image file not found: {args.image}')
+        sys.exit(1)
 
     with open(args.questions, 'r', encoding='utf-8') as f:
         questions = json.load(f)
@@ -280,6 +319,11 @@ def main():
     cover_slide = slides[0]
     quiz_slide  = slides[1]
     promo_slide = slides[2]
+
+    # ── Replace cover image if supplied ───────────────────────────────────
+    if args.image:
+        print('\nProcessing cover slide image...')
+        replace_cover_image(cover_slide, args.image)
 
     # ── Build a fresh presentation copying the slide master/layout refs ───
     # Strategy: start from the template, delete slides 1-2 (quiz+promo),

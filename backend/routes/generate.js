@@ -99,8 +99,9 @@ function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, ima
       '--output', outputPath,
     ];
 
-    // Removed: if (imagePath) { args.push('--image', imagePath); }
-
+    if (imagePath) {
+      args.push('--image', imagePath);
+    }
 
     onProgress({ step: 'python_start', message: 'Starting PowerPoint engine...' });
 
@@ -211,8 +212,7 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
       templatePath,
       questionsPath: questionsFilePath,
       outputPath: outputFilePath,
-      imagePath: null, // Legacy image replacement is deprecated in generate_quiz.py
-
+      imagePath: thumbnailPath || null,
     }, sendEvent);
 
     // ── Step 4: Finalize ──
