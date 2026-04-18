@@ -140,7 +140,7 @@ function App() {
         <div className="midnight-bg" />
         <div className="grid-overlay" />
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="auth-card">
-          <img src="/striversLogo.png" alt="Strivers" style={{ height: '40px', marginBottom: '2rem' }} />
+          <img src="/striversLogo.png" alt="Strivers" style={{ height: '56px', marginBottom: '2rem' }} />
           <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Protected Access</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' }}>This studio is restricted to Strivers Content Team.</p>
           <div style={{ marginBottom: '1.5rem' }}>

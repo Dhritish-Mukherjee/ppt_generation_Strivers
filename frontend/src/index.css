@@ -75,8 +75,7 @@ body {
 }
 
 .logo-img {
-  height: 28px;
-  filter: brightness(0) invert(1);
+  height: 44px;
 }
 
 /* Main Layout */
@@ -296,9 +295,8 @@ textarea:focus, input:focus {
 }
 
 .footer-logo {
-  height: 24px;
+  height: 36px;
   margin-bottom: 1rem;
-  filter: brightness(0) invert(1);
   opacity: 0.5;
 }
 
