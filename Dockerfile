@@ -22,7 +22,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Install python-pptx inside the venv
-RUN pip install --no-cache-dir python-pptx==0.6.23
+RUN pip install --no-cache-dir python-pptx==0.6.23 lxml==5.1.0
 
 # Set working directory
 WORKDIR /app

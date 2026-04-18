@@ -11,7 +11,7 @@ function App() {
 
   const [questions, setQuestions] = useState('');
   const [thumbnail, setThumbnail] = useState(null);
-  const [template, setTemplate] = useState('1');
+  const [template, setTemplate] = useState('master');
   const [templates, setTemplates] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -83,7 +83,8 @@ function App() {
     const formData = new FormData();
     formData.append('questions', questions);
     formData.append('templateNumber', template);
-    if (thumbnail) formData.append('thumbnail', thumbnail);
+    // Removed legacy branding upload as it is now handled via slide master
+    // if (thumbnail) formData.append('thumbnail', thumbnail);
 
     try {
       const response = await fetch('/api/generate', {
@@ -174,12 +175,19 @@ function App() {
               <div style={{ marginBottom: '1.5rem' }}>
                 <label>1. Design Template</label>
                 <div className="template-scroll">
-                  {templates.map(t => (
-                    <div key={t.number} className={`template-item ${template === t.number ? 'active' : ''}`} onClick={() => setTemplate(t.number)}>
-                      <Sparkles size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Style {t.number}</div>
+                  {templates.length > 0 ? (
+                    templates.map(t => (
+                      <div key={t.number} className={`template-item ${template === t.number ? 'active' : ''}`} onClick={() => setTemplate(t.number)}>
+                        <Layers size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>{t.label || `Style ${t.number}`}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="template-item active">
+                      <Layers size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Slide Master</div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -188,13 +196,12 @@ function App() {
                 <textarea rows="11" placeholder="Paste your questions here... (e.g. 1. What is JVM? A. B. C. D.)" value={questions} onChange={(e) => setQuestions(e.target.value)} required />
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label>3. Visual Branding (Optional)</label>
-                <input type="file" id="thumb" hidden onChange={(e) => setThumbnail(e.target.files[0])} />
-                <label htmlFor="thumb" style={{ border: '1px dashed var(--border-color)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', textAlign: 'center', background: 'rgba(255,255,255,0.02)' }}>
-                  <Upload size={20} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                  <p style={{ fontSize: '0.8rem' }}>{thumbnail ? thumbnail.name : 'Drop brand cover image here'}</p>
-                </label>
+              {/* Visual Branding is now baked into the slide_master.pptx */}
+              <div style={{ padding: '1.5rem', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>Dynamic Branding Enabled</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                  The engine is using the high-fidelity <strong>Strivers Slide Master</strong> which includes automatic layout management and promotional slide insertion.
+                </p>
               </div>
 
               <button type="submit" className="btn-primary" disabled={isGenerating || !questions}>

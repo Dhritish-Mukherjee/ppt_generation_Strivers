@@ -89,7 +89,7 @@ ${rawQuestions}
 // ── Run Python script with streaming output ───────────────────────────────
 function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, imagePath }, onProgress) {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, '..', 'scripts', 'generate_pptx.py');
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'generate_quiz.py');
     const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
 
     const args = [
@@ -99,9 +99,8 @@ function runPythonScriptStreaming({ templatePath, questionsPath, outputPath, ima
       '--output', outputPath,
     ];
 
-    if (imagePath) {
-      args.push('--image', imagePath);
-    }
+    // Removed: if (imagePath) { args.push('--image', imagePath); }
+
 
     onProgress({ step: 'python_start', message: 'Starting PowerPoint engine...' });
 
@@ -186,11 +185,12 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
     }
 
     // ── Resolve template path ──
-    const templateFileName = `template${templateNumber}.pptx`;
+    // From now on using slide_master.pptx
+    const templateFileName = 'slide_master.pptx';
     const templatePath = path.join(__dirname, '..', 'templates', templateFileName);
 
     if (!fs.existsSync(templatePath)) {
-      return sendEvent({ error: `Template ${templateNumber} not found.` });
+      return sendEvent({ error: `Template slide_master.pptx not found in templates directory.` });
     }
 
     // ── Thumbnail path ──
@@ -211,7 +211,8 @@ router.post('/generate', upload.single('thumbnail'), async (req, res) => {
       templatePath,
       questionsPath: questionsFilePath,
       outputPath: outputFilePath,
-      imagePath: thumbnailPath || null,
+      imagePath: null, // Legacy image replacement is deprecated in generate_quiz.py
+
     }, sendEvent);
 
     // ── Step 4: Finalize ──
@@ -260,13 +261,10 @@ router.get('/templates', (req, res) => {
   const templatesDir = path.join(__dirname, '..', 'templates');
   if (!fs.existsSync(templatesDir)) return res.json({ templates: [] });
 
-  const files = fs.readdirSync(templatesDir)
-    .filter(f => f.match(/^template\d*\.pptx$/i))
-    .map(f => {
-      const match = f.match(/^template(\d+)\.pptx$/i);
-      const num = match ? match[1] : '1';
-      return { number: num, filename: f };
-    });
+  // Only returning slide_master.pptx as the active template
+  const files = [
+    { number: 'master', filename: 'slide_master.pptx', label: 'Slide Master' }
+  ];
 
   res.json({ templates: files });
 });
