@@ -24,6 +24,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve generated files for download
 app.use('/outputs', express.static(outputDir));
 
+// Serve templates for preview
+const templatesDir = path.join(__dirname, 'templates');
+app.use('/templates', express.static(templatesDir));
+
 // Routes
 app.use('/api', generateRoute);
 

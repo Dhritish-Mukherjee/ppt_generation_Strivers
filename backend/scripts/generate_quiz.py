@@ -71,6 +71,15 @@ def _pick_sizes(question):
         return 3600, 3000, 3000, 2400
 
 
+# ── Bengali numeral helper ─────────────────────────────────────────────────
+
+_BENGALI_DIGITS = '০১২৩৪৫৬৭৮৯'
+
+def _to_bengali(n):
+    """Convert an integer to Bengali numeral string. e.g. 12 → '১২'"""
+    return ''.join(_BENGALI_DIGITS[int(d)] for d in str(n))
+
+
 # ── XML helpers ────────────────────────────────────────────────────────────
 
 def _a(tag):
@@ -169,7 +178,7 @@ def _fill_question(sp, q_num, question, q_en_sz, q_bn_sz):
     p1 = paras[1]
     rPr1 = _first_rPr(p1) or copy.deepcopy(rPr0)
     _clear_runs(p1)
-    bn_text = question['question_bn']
+    bn_text = f'{_to_bengali(q_num)}. {question["question_bn"]}'
     p1.append(_make_run(rPr1, 'hi-IN', bn_text, q_bn_sz))
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileDown, Play, AlertCircle, CheckCircle2, Lock, ShieldCheck, Zap, Layers, Terminal as ConsoleIcon, Info, Sparkles } from 'lucide-react';
+import { Upload, FileDown, Play, AlertCircle, CheckCircle2, Lock, ShieldCheck, Zap, Layers, Terminal as ConsoleIcon, Info, Sparkles, Eye, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -17,6 +17,8 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
   
   const logEndRef = useRef(null);
 
@@ -176,15 +178,62 @@ function App() {
                 <div className="template-scroll">
                   {templates.length > 0 ? (
                     templates.map(t => (
-                      <div key={t.number} className={`template-item ${template === t.number ? 'active' : ''}`} onClick={() => setTemplate(t.number)}>
+                      <div
+                        key={t.number}
+                        className={`template-item ${template === t.number ? 'active' : ''}`}
+                        onClick={() => setTemplate(t.number)}
+                        style={{ position: 'relative' }}
+                      >
                         <Layers size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
                         <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>{t.label || `Style ${t.number}`}</div>
+                        <button
+                          type="button"
+                          title="Preview template"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const absolute = `${window.location.origin}/templates/${t.filename}`;
+                            setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absolute)}`);
+                            setPreviewOpen(true);
+                          }}
+                          style={{
+                            position: 'absolute', top: '6px', right: '6px',
+                            background: 'rgba(255,255,255,0.1)', border: 'none',
+                            borderRadius: '6px', padding: '3px 5px', cursor: 'pointer',
+                            color: 'var(--primary)', display: 'flex', alignItems: 'center',
+                            opacity: 0.8,
+                          }}
+                        >
+                          <Eye size={12} />
+                        </button>
                       </div>
                     ))
                   ) : (
-                    <div className="template-item active">
+                    <div
+                      className="template-item active"
+                      style={{ position: 'relative' }}
+                      onClick={() => setTemplate('master')}
+                    >
                       <Layers size={16} style={{ marginBottom: '0.5rem', opacity: 0.6 }} />
                       <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>Slide Master</div>
+                      <button
+                        type="button"
+                        title="Preview template"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const absolute = `${window.location.origin}/templates/slide_master.pptx`;
+                          setPreviewUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absolute)}`);
+                          setPreviewOpen(true);
+                        }}
+                        style={{
+                          position: 'absolute', top: '6px', right: '6px',
+                          background: 'rgba(255,255,255,0.1)', border: 'none',
+                          borderRadius: '6px', padding: '3px 5px', cursor: 'pointer',
+                          color: 'var(--primary)', display: 'flex', alignItems: 'center',
+                          opacity: 0.8,
+                        }}
+                      >
+                        <Eye size={12} />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -261,6 +310,73 @@ function App() {
           developed and maintained by @503error_humannotfound
         </div>
       </footer>
+      {/* ── Template Preview Modal ── */}
+      <AnimatePresence>
+        {previewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1000,
+              background: 'rgba(0,0,0,0.85)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              padding: '1.5rem',
+            }}
+            onClick={() => setPreviewOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              style={{
+                width: '100%', maxWidth: '960px',
+                height: '80vh',
+                background: '#0f172a',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+                display: 'flex', flexDirection: 'column',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0.875rem 1.25rem',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.03)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Eye size={15} style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Template Preview — Slide Master</span>
+                </div>
+                <button
+                  onClick={() => setPreviewOpen(false)}
+                  style={{
+                    background: 'rgba(255,255,255,0.07)', border: 'none',
+                    borderRadius: '8px', padding: '6px 8px', cursor: 'pointer',
+                    color: '#94a3b8', display: 'flex', alignItems: 'center',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Office Online Iframe */}
+              <iframe
+                src={previewUrl}
+                title="Template Preview"
+                style={{ flex: 1, width: '100%', border: 'none', background: '#fff' }}
+                allowFullScreen
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
