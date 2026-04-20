@@ -47,12 +47,13 @@ Convert the following raw quiz questions into a valid JSON array.
 RULES:
 1. Each question MUST have both English and Bengali versions.
 2. Each option MUST have an English ("en") version.
-3. If the option is a universal symbol, chemical formula (like H2O), number (like 100°C), or word that is identical in both languages, leave the Bengali ("bn") field EMPTY ("").
-4. If Bengali is missing for any other text, translate it accurately from English.
-5. If English is missing for any field, translate it accurately from Bengali.
-6. If Bengali is already present but seems incorrect, improve it.
-7. Remove any option prefixes like "A.", "B.", "1." from the text.
-8. Output ONLY the raw JSON array — no markdown.
+3. Each option MUST also have a Bengali ("bn") translation. On the final slide, options are rendered as: "A. English text (বাংলা টেক্সট)" — the Bengali text appears inside brackets right next to the English text. So the "bn" field is critical for every option.
+4. ONLY leave the Bengali ("bn") field EMPTY ("") if the option is a universal symbol, chemical formula (like H2O), number (like 100°C), or a word that is completely identical in both languages and needs no translation.
+5. If Bengali is missing for any other text, translate it accurately from English.
+6. If English is missing for any field, translate it accurately from Bengali.
+7. If Bengali is already present but seems incorrect, improve it.
+8. Remove any option prefixes like "A.", "B.", "1." from the text.
+9. Output ONLY the raw JSON array — no markdown.
 
 OUTPUT FORMAT (strict):
 [
